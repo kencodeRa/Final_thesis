@@ -26,7 +26,8 @@ while True:
 
     # Crop the frame to focus on the ROI
     roi = img[roi_y:roi_y + roi_height, roi_x:roi_x + roi_width]
-
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cv2.putText(img, current_time, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 1)
     plate_cascade = cv2.CascadeClassifier(harcascade)
     img_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
 

@@ -1,6 +1,10 @@
 import cv2
 import datetime
 import easyocr
+import mysql.connector
+
+connection = mysql.connector.connect(host='localhost',user='roon',password='',database='license_plate_db')
+db_cursor = connection.cursor()
 
 harcascade = "model/haarcascade_russian_plate_number.xml"
 
@@ -27,7 +31,7 @@ while True:
     # Crop the frame to focus on the ROI
     roi = img[roi_y:roi_y + roi_height, roi_x:roi_x + roi_width]
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    cv2.putText(img, current_time, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 1)
+    cv2.putText(img, current_time, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 2)
     plate_cascade = cv2.CascadeClassifier(harcascade)
     img_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
 
@@ -70,6 +74,23 @@ while True:
                                 2)
                     print("License Plate:", plate_text, "Detected at:", current_time)
 
+                    # check license plate if registered in database and insert the data to whether its registered or not registered
+                    check_plate = "SELECT * FROM registered WHERE license_plate = %s"
+                    db_cursor.execute(check_plate, (plate_text,))
+                    result = db_cursor.fetchone()
+                    if result:
+                        insert_db = "INSERT INTO monitoring(license_plate, date_time, registered) VALUES (%s,%s,%s)"
+                        insert_values = (plate_text, current_time, "registered")
+                        db_cursor.execute(insert_db, insert_values)
+                        connection.commit()
+                        print("license plate already registered".format(plate_text))
+                    else:
+                        insert_db = "INSERT INTO monitoring(license_plate, date_time, registered) VALUES (%s,%s,%s)"
+                        insert_values = (plate_text, current_time, "Not registered")
+                        db_cursor.execute(insert_db, insert_values)
+                        connection.commit()
+                        print("not registered")
+
             # Save the detected plate
             if count < max_plate_count:
                 cv2.imwrite("plates/scanned_" + str(img_count) + ".jpg", img_thresholded)
@@ -80,7 +101,9 @@ while True:
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+#close database connection
+db_cursor.close()
+connection.close()
 
 cap.release()
 cv2.destroyAllWindows()
-

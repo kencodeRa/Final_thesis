@@ -10,8 +10,8 @@ harcascade = "model/haarcascade_russian_plate_number.xml"
 
 cap = cv2.VideoCapture(0)
 
-cap.set(3, 640)  # width
-cap.set(4, 480)  # height
+cap.set(3, 640) 
+cap.set(4, 480)
 
 # Define the coordinates of the region of interest (ROI)
 roi_x, roi_y, roi_width, roi_height = 200, 100, 400, 300
@@ -32,8 +32,8 @@ while True:
     roi = img[roi_y:roi_y + roi_height, roi_x:roi_x + roi_width]
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     date, time = current_time.split()  # Splitting the current time into date and time
-    cv2.putText(img, date, (50, 70), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 2)  # Displaying date
-    cv2.putText(img, time, (50, 100), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 2)  # Displaying time
+    cv2.putText(img, date, (50, 70), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 2) 
+    cv2.putText(img, time, (50, 100), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 2)
 
     plate_cascade = cv2.CascadeClassifier(harcascade)
     img_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)

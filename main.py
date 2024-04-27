@@ -3,7 +3,7 @@ import datetime
 import easyocr
 import mysql.connector
 
-connection = mysql.connector.connect(host='localhost',user='roon',password='',database='license_plate_db')
+connection = mysql.connector.connect(host='localhost',user='root',password='',database='license_plate_db')
 db_cursor = connection.cursor()
 
 harcascade = "model/haarcascade_russian_plate_number.xml"

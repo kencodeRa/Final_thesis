@@ -1,37 +1,13 @@
-import cv2
-import datetime
-import easyocr
-import mysql.connector
-
-connection = mysql.connector.connect(host='localhost',user='roon',password='',database='license_plate_db')
-db_cursor = connection.cursor()
-
-harcascade = "model/haarcascade_russian_plate_number.xml"
-
-cap = cv2.VideoCapture(0)
-
-cap.set(3, 640)  # width
-cap.set(4, 480)  # height
-
-# Define the coordinates of the region of interest (ROI)
-roi_x, roi_y, roi_width, roi_height = 200, 100, 400, 300
-
-min_area = 500
-max_total_area = 20000  # Maximum total area of detected plates
-max_plate_count = 2  # Maximum number of plates to detect
-count = 0
-total_area = 0
-img_count = 0
-
-reader = easyocr.Reader(['en'])
-
 while True:
     success, img = cap.read()
 
     # Crop the frame to focus on the ROI
     roi = img[roi_y:roi_y + roi_height, roi_x:roi_x + roi_width]
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    cv2.putText(img, current_time, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 2)
+    date, time = current_time.split()  # Splitting the current time into date and time
+    cv2.putText(img, date, (50, 70), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 2)  # Displaying date
+    cv2.putText(img, time, (50, 100), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 2)  # Displaying time
+
     plate_cascade = cv2.CascadeClassifier(harcascade)
     img_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
 
@@ -55,7 +31,7 @@ while True:
             _, img_thresholded = cv2.threshold(cv2.cvtColor(img_roi, cv2.COLOR_BGR2GRAY), 0, 255,
                                                cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
-            # Read license plate using EasyOCR
+            
             result = reader.readtext(img_roi)
 
             if result:
@@ -68,10 +44,6 @@ while True:
                     cv2.putText(img, plate_text, (plate_text_x, plate_text_y), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
                                 (255, 0, 255), 2)
 
-                    # Print date and time
-                    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    cv2.putText(img, current_time, (x, y + h + 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.7, (0, 255, 255),
-                                2)
                     print("License Plate:", plate_text, "Detected at:", current_time)
 
                     # check license plate if registered in database and insert the data to whether its registered or not registered
@@ -79,19 +51,19 @@ while True:
                     db_cursor.execute(check_plate, (plate_text,))
                     result = db_cursor.fetchone()
                     if result:
-                        insert_db = "INSERT INTO monitoring(license_plate, date_time, registered) VALUES (%s,%s,%s)"
-                        insert_values = (plate_text, current_time, "registered")
+                        insert_db = "INSERT INTO monitoring(license_plate, date, time, registered) VALUES (%s,%s,%s,%s)"
+                        insert_values = (plate_text, date, time, "registered")
                         db_cursor.execute(insert_db, insert_values)
                         connection.commit()
-                        print("license plate already registered".format(plate_text))
+                        print("License plate already registered".format(plate_text))
                     else:
-                        insert_db = "INSERT INTO monitoring(license_plate, date_time, registered) VALUES (%s,%s,%s)"
-                        insert_values = (plate_text, current_time, "Not registered")
+                        insert_db = "INSERT INTO monitoring(license_plate, date, time, registered) VALUES (%s,%s,%s,%s)"
+                        insert_values = (plate_text, date, time, "Not registered")
                         db_cursor.execute(insert_db, insert_values)
                         connection.commit()
-                        print("not registered")
+                        print("Not registered")
 
-            # Save the detected plate
+           
             if count < max_plate_count:
                 cv2.imwrite("plates/scanned_" + str(img_count) + ".jpg", img_thresholded)
                 count += 1
@@ -101,7 +73,8 @@ while True:
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-#close database connection
+
+
 db_cursor.close()
 connection.close()
 

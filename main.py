@@ -1,3 +1,30 @@
+import cv2
+import datetime
+import easyocr
+import mysql.connector
+
+connection = mysql.connector.connect(host='localhost',user='roon',password='',database='license_plate_db')
+db_cursor = connection.cursor()
+
+harcascade = "model/haarcascade_russian_plate_number.xml"
+
+cap = cv2.VideoCapture(0)
+
+cap.set(3, 640)  # width
+cap.set(4, 480)  # height
+
+# Define the coordinates of the region of interest (ROI)
+roi_x, roi_y, roi_width, roi_height = 200, 100, 400, 300
+
+min_area = 500
+max_total_area = 20000  # Maximum total area of detected plates
+max_plate_count = 2  # Maximum number of plates to detect
+count = 0
+total_area = 0
+img_count = 0
+
+reader = easyocr.Reader(['en'])
+
 while True:
     success, img = cap.read()
 
